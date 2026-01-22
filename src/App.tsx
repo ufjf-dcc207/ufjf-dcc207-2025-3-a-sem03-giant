@@ -80,7 +80,6 @@ export default function App() {
         if (nextStage) {
             handleChangeStage(nextStage);
         } else {
-            alert("Você zerou o jogo! Resetando para a primeira fase.");
             handleChangeStage(stagesList[0]);
         }
     };
