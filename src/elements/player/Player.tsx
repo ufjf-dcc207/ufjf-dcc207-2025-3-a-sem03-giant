@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, MathUtils, Vector3 } from "three";
 import Braco from "./Braco";
@@ -12,21 +12,34 @@ export default function Player({
     gridPosition,
     rotationIndex,
     blockHeight = 0,
+    stepIndex = 0,
+    command = "",
 }: PlayerProps) {
     const groupRef = useRef<Group>(null);
+
+    const [isHopping, setIsHopping] = useState(false);
+    const hopProgress = useRef(0);
 
     const targetX = gridPosition[0];
     const targetZ = gridPosition[1];
     const targetY = blockHeight * 0.5;
-
     const targetRotationY = rotationIndex * (Math.PI / 2);
 
     useEffect(() => {
-        if (groupRef.current) {
-            const currentPos = groupRef.current.position;
-            const dist = new Vector3(targetX, targetY, targetZ).distanceTo(currentPos);
+        if (stepIndex > 0) {
+            if (command === "b") {
+                setIsHopping(true);
+                hopProgress.current = 0;
+            }
+        }
+    }, [stepIndex, command]);
 
-            // Teleporte se estiver muito longe (reset de fase)
+    // Resete de fase
+    useEffect(() => {
+        if (groupRef.current) {
+            const dist = new Vector3(targetX, targetY, targetZ).distanceTo(
+                groupRef.current.position,
+            );
             if (dist > 2) {
                 groupRef.current.position.set(targetX, targetY, targetZ);
                 groupRef.current.rotation.y = targetRotationY;
@@ -34,25 +47,59 @@ export default function Player({
         }
     }, [targetX, targetY, targetZ, targetRotationY]);
 
+    // Loop de animação
     useFrame((_, delta) => {
         if (!groupRef.current) return;
 
+        const current = groupRef.current.position;
         const speed = 15 * delta;
 
-        // Posição (Lerp simples)
-        groupRef.current.position.x = MathUtils.lerp(groupRef.current.position.x, targetX, speed);
-        groupRef.current.position.z = MathUtils.lerp(groupRef.current.position.z, targetZ, speed);
-        groupRef.current.position.y = MathUtils.lerp(groupRef.current.position.y, targetY, speed);
+        let hopOffset = 0;
+        if (isHopping) {
+            hopProgress.current += delta * 12;
+            if (hopProgress.current >= Math.PI) {
+                setIsHopping(false);
+                hopProgress.current = 0;
+            } else {
+                hopOffset = Math.sin(hopProgress.current) * 0.1;
+            }
+        }
 
+        let nextX = MathUtils.lerp(current.x, targetX, speed);
+        let nextZ = MathUtils.lerp(current.z, targetZ, speed);
+        let nextY = MathUtils.lerp(current.y, targetY, speed);
+
+        const distY = targetY - current.y;
+
+        const distXZ = Math.hypot(targetX - current.x, targetZ - current.z);
+
+        if (distY > 0.1) {
+            if (Math.abs(distY) > 0.05) {
+                nextX = current.x; // Trava X
+                nextZ = current.z; // Trava Z
+            }
+        } else if (distY < -0.1) {
+            if (distXZ > 0.05) {
+                nextY = current.y; // Trava Y (flutua)
+            }
+        }
+
+        // Aplica os valores calculados
+        groupRef.current.position.x = nextX;
+        groupRef.current.position.z = nextZ;
+        groupRef.current.position.y = nextY + hopOffset; // Soma o pulinho na altura final
+
+        //Rotação
         const currentRot = groupRef.current.rotation.y;
-
-        // Calcula a diferença entre onde quero ir e onde estou
         let diff = targetRotationY - currentRot;
-
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
 
-        groupRef.current.rotation.y += diff * speed;
+        if (Math.abs(diff) < 0.01) {
+            groupRef.current.rotation.y = targetRotationY;
+        } else {
+            groupRef.current.rotation.y += diff * speed;
+        }
     });
 
     return (

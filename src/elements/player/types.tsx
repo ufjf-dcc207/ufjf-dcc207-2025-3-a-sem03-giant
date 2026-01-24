@@ -3,4 +3,6 @@ export type PlayerProps = {
     gridPosition: [number, number];
     rotationIndex: number;
     blockHeight: number;
+    stepIndex?: number;
+    command?: string;
 };

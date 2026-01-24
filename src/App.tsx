@@ -7,7 +7,7 @@ import Player from "./elements/player/Player";
 import CommandTape from "./elements/CommandTape";
 import VictoryModal from "./elements/VictoryModal";
 import { stagesList } from "./elements/Stages";
-import { gameReducer, createInitialState } from "./gameReducer"; // Importamos o reducer
+import { gameReducer, createInitialState } from "./gameReducer";
 import type { Stage } from "./elements/Types";
 import "./App.css";
 
@@ -67,6 +67,8 @@ export default function App() {
 
     const [visualX, visualZ] = getVisualPosition(playerGridPos, activeStage.floor);
 
+    const currentCommand = commandIndex > 0 ? commands[commandIndex - 1] : "";
+
     return (
         <div className="main-container">
             <VictoryModal isOpen={isVictory} onNextStage={handleNextStage} />
@@ -112,6 +114,8 @@ export default function App() {
                             gridPosition={[visualX, visualZ]}
                             rotationIndex={playerRotation}
                             blockHeight={blockHeight}
+                            stepIndex={commandIndex}
+                            command={currentCommand}
                         />
                     </group>
                     <OrbitControls enablePan={false} enableZoom={false} />
