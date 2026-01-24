@@ -84,7 +84,7 @@ export const createInitialState = (initialStage: Stage): GameState => {
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
     switch (action.type) {
         case "RESET_STAGE": {
-            // 
+            //
             const stage = action.payload?.stage || state.activeStage;
             // Se commands vier no payload, usa ele. Se for undefined, mantem o atual. Se for string vazia, limpa.
             const newCommands =
@@ -179,8 +179,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             }
 
             // Verifica Vitória
+            const nextCommandIndex = state.commandIndex + 1;
+            const isTapeFinished = nextCommandIndex >= state.commands.length;
             const totalButtons = countTotalButtons(state.activeStage.floor);
-            const isVictory = totalButtons > 0 && currActiveButtons.length === totalButtons;
+            const isVictory =
+                totalButtons > 0 && currActiveButtons.length === totalButtons && isTapeFinished;
 
             return {
                 ...state,
