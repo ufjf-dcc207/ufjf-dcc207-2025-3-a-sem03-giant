@@ -12,7 +12,7 @@ import type { Stage } from "./elements/Types";
 import "./App.css";
 
 export default function App() {
-    // Toda lógica de useState substituida pelo uso do useReducer
+
     const [state, dispatch] = useReducer(gameReducer, stagesList[0], createInitialState);
 
     const {
